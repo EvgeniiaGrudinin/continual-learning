@@ -23,7 +23,7 @@ def train_cl(model, train_datasets, replay_mode="none", scenario="class",classes
     [iters]             <int>, # of optimization-steps (i.e., # of batches) per task
     [generator]         None or <nn.Module>, if a seperate generative model should be trained (for [gen_iters] per task)
     [*_cbs]             <list> of call-back functions to evaluate training-progress
-    #Evgeniia: [traces]  list of torch.tensors to store activations for m-phate for each task'''
+    [traces]  list of torch.tensors to store activations for m-phate for each task''' #added for M-PHATE
 
     # Set model in training-mode
     model.train()
@@ -238,16 +238,15 @@ def train_cl(model, train_datasets, replay_mode="none", scenario="class",classes
                 # Train the main model with this batch
                 loss_dict = model.train_a_batch(x, y, x_=x_, y_=y_, scores=scores, scores_=scores_,
                                                 active_classes=active_classes, task=task, rnt = 1./task)
-                #Evgeniia
+                #get the activation
                 if traces is not None:
-                    if batch_index%20==0:
-                        activations=model.feature_extractor(x, returnAll=True) #activations of the last hidden layer
-                        
+                    if batch_index%20==0: #storing activations from every 20th training batch 
+                        activations=model.feature_extractor(x, returnAll=True) #activations of all hidden layers (if returnAll=False-for the last)
+                        #collect activations from hidden layers into one tensor
                         activations=torch.cat(activations, dim=1)
                         #print("size of activations is now ", activations.shape)
                         traces[task-1][batch_index//20-1]=activations
                     
-                #end Evgeniia
                 # Update running parameter importance estimates in W
                 if isinstance(model, ContinualLearner) and (model.si_c>0):
                     for n, p in model.named_parameters():

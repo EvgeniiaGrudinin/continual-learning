@@ -146,7 +146,6 @@ class MLP(nn.Module):
     def forward(self, x, returnAll=False):
         #this method was modified from original to add option to return all hidden activations or just the last one
         activations=[]
-
         for lay_id in range(1, self.layers+1):
             x = getattr(self, 'fcLayer{}'.format(lay_id))(x)    #return fcLayer name
             if returnAll:

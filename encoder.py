@@ -65,7 +65,7 @@ class Classifier(ContinualLearner, Replayer, ExemplarHandler):
          return self.classifier(final_features)
 
 
-    def feature_extractor(self, images, returnAll=False): #added returnAll for all hidden layers
+    def feature_extractor(self, images, returnAll=False): #added returnAll to collect data from all hidden layers
         return self.fcE(self.flatten(images), returnAll)
 
 
