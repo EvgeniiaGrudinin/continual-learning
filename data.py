@@ -204,6 +204,8 @@ def get_multitask_experiment(name, scenario, tasks, data_dir="./datasets", only_
                     test_dataset, transform=transforms.Lambda(lambda x, p=perm: _permutate_image_pixels(x, p)),
                     target_transform=target_transform
                 ))
+                                                             ###OUR CASE###
+                                                             
     elif name == 'splitMNIST':
         # check for number of tasks
         if tasks>10:

@@ -1,5 +1,6 @@
 import torch
 from torch.nn import functional as F
+from torchvision import transforms as T
 from linear_nets import MLP,fc_layer
 from exemplars import ExemplarHandler
 from continual_learner import ContinualLearner
@@ -18,7 +19,7 @@ class Classifier(ContinualLearner, Replayer, ExemplarHandler):
         super().__init__()
         self.classes = classes
         self.label = "Classifier"
-        self.fc_layers = fc_layers
+        self.layers = fc_layers
 
         # settings for training
         self.binaryCE = binaryCE                 #-> use binary (instead of multiclass) prediction error
@@ -35,7 +36,7 @@ class Classifier(ContinualLearner, Replayer, ExemplarHandler):
         ######------SPECIFY MODEL------######
 
         # flatten image to 2D-tensor
-        self.flatten = utils.Flatten()
+        self.flatten = utils.Flatten() #convert size of image (like x.view())
 
         # fully connected hidden layers
         self.fcE = MLP(input_size=image_channels*image_size**2, output_size=fc_units, layers=fc_layers-1,
@@ -45,7 +46,7 @@ class Classifier(ContinualLearner, Replayer, ExemplarHandler):
 
         # classifier
         self.classifier = fc_layer(mlp_output_size, classes, excit_buffer=True, nl='none', drop=fc_drop)
-
+        #MLP output size for EWC 400 and classes=10-classify ten digits
 
     def list_init_layers(self):
         '''Return list of modules whose parameters could be initialized differently (i.e., conv- or fc-layers).'''
@@ -60,11 +61,12 @@ class Classifier(ContinualLearner, Replayer, ExemplarHandler):
 
 
     def forward(self, x):
-        final_features = self.fcE(self.flatten(x))
-        return self.classifier(final_features)
+         final_features = self.fcE(self.flatten(x)) #2D-tenzor goes into fully connected hidden layer
+         return self.classifier(final_features)
 
-    def feature_extractor(self, images):
-        return self.fcE(self.flatten(images))
+
+    def feature_extractor(self, images, returnAll=False): #added returnAll for all hidden layers
+        return self.fcE(self.flatten(images), returnAll)
 
 
     def train_a_batch(self, x, y, scores=None, x_=None, y_=None, scores_=None, rnt=0.5, active_classes=None, task=1):

@@ -162,7 +162,7 @@ def run(args, verbose=False):
         os.mkdir(args.r_dir)
     if args.pdf and not os.path.isdir(args.p_dir):
         os.mkdir(args.p_dir)
-
+    
     scenario = args.scenario
     # If Task-IL scenario is chosen with single-headed output layer, set args.scenario to "domain"
     # (but note that when XdG is used, task-identity information is being used so the actual scenario is still Task-IL)
@@ -186,6 +186,12 @@ def run(args, verbose=False):
     if cuda:
         torch.cuda.manual_seed(args.seed)
 
+    #Evgeniia
+    #each trace is m*n*p, m batches, n hidden neurons activations for each of p train sample from train dataset:
+    
+    t_shape=(args.iters//20,args.batch,args.fc_units*(args.fc_lay-1))
+    traces=[torch.zeros(t_shape, requires_grad=False) for _ in range(args.tasks)] #list of time traces for each task for visualization with M-PHATE
+    #end Evgeniia
 
     #-------------------------------------------------------------------------------------------------#
 
@@ -433,6 +439,7 @@ def run(args, verbose=False):
         generator=generator, gen_iters=args.g_iters, gen_loss_cbs=generator_loss_cbs,
         sample_cbs=sample_cbs, eval_cbs=eval_cbs, loss_cbs=generator_loss_cbs if args.feedback else solver_loss_cbs,
         metric_cbs=metric_cbs, use_exemplars=args.use_exemplars, add_exemplars=args.add_exemplars,
+        traces=traces#Evgeniia, added traces list to hold activations for Mphate
     )
     # Get total training-time in seconds, and write to file
     if args.time:
@@ -440,6 +447,12 @@ def run(args, verbose=False):
         time_file = open("{}/time-{}.txt".format(args.r_dir, param_stamp), 'w')
         time_file.write('{}\n'.format(training_time))
         time_file.close()
+
+    # store trace for mphate into file in results folder, Evgeniia
+    if len(traces)>0:
+        t=torch.stack(traces).detach() 
+        np.savez_compressed("{}/traces-{}".format(args.r_dir, args.scenario),t.numpy())
+        print("Saved to results forlder compressed numpy array, of shape ", t.shape," containing traces for mphate for ", len(traces), " tasks.")
 
 
     #-------------------------------------------------------------------------------------------------#

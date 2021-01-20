@@ -56,7 +56,6 @@ def _eval_cb(log, test_datasets, visdom=None, iters_per_task=None, test_size=Non
     return eval_cb if (visdom is not None) else None
 
 
-
 ##------------------------------------------------------------------------------------------------------------------##
 
 ################################################

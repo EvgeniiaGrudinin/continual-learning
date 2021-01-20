@@ -30,7 +30,7 @@ class fc_layer(nn.Module):
 
     def forward(self, x, return_pa=False):
         input = self.dropout(x) if hasattr(self, 'dropout') else x
-        pre_activ = self.bn(self.linear(input)) if hasattr(self, 'bn') else self.linear(input)
+        pre_activ = self.bn(self.linear(input)) if hasattr(self, 'bn') else self.linear(input) #activation f-n
         gate = self.sigmoid(self.gate(x)) if hasattr(self, 'gate') else None
         gated_pre_activ = gate * pre_activ if hasattr(self, 'gate') else pre_activ
         output = self.nl(gated_pre_activ) if hasattr(self, 'nl') else gated_pre_activ
@@ -105,7 +105,7 @@ class MLP(nn.Module):
                 else:
                     hidden_sizes = [int(x) for x in np.repeat(hid_size, layers - 1)]
             size_per_layer = [input_size] + hidden_sizes + [output_size]
-        self.layers = len(size_per_layer)-1
+        self.layers = len(size_per_layer)-1 
 
         # set label for this module
         # -determine "non-default options"-label
@@ -143,10 +143,15 @@ class MLP(nn.Module):
         if self.layers<1:
             self.noLayers = utils.Identity()
 
-    def forward(self, x):
+    def forward(self, x, returnAll=False):
+        #this method was modified from original to add option to return all hidden activations or just the last one
+        activations=[]
+
         for lay_id in range(1, self.layers+1):
-            x = getattr(self, 'fcLayer{}'.format(lay_id))(x)
-        return x
+            x = getattr(self, 'fcLayer{}'.format(lay_id))(x)    #return fcLayer name
+            if returnAll:
+                activations.append(x) #store activations for all hidden layers
+        return x if returnAll==False else activations
 
     @property
     def name(self):
